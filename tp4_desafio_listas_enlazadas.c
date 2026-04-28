@@ -62,7 +62,8 @@ int main()
             printf("\nDESCRIPCION: ");
             fgets(buffer, sizeof(buffer), stdin);
             // corrijo el final del buffer: reemplazo el '\n' (que agrega el fgets() en la cadena al final) por '\0'
-            buffer[sizeof(buffer)-1] = '\0';
+            buffer[sizeof(buffer)-2] = '\0';
+            //buffer[sizeof(buffer)-1] = '\0';
             // defino tamaño para la cadena 'descripcionTareaNueva'
             descripcionTareaNueva = (char *)malloc(sizeof(char) * sizeof(buffer));
             strcpy(descripcionTareaNueva, buffer);
@@ -191,14 +192,28 @@ void mostrarTareas(NodoTarea * lista)
 // (Y LA DEJA TODAVÍA EN LA LISTA_PENDIENTES)
 NodoTarea * marcarTarea(NodoTarea ** lista_p, NodoTarea ** lista_r, int id_tarea)
 {   
-    NodoTarea * aux = *lista_p;
-    while(aux && (aux->siguienteTarea)->T.id != id_tarea)
+    /*
+    NodoTarea ** aux = lista_p;
+    while(*aux && (*aux)->siguienteTarea && ((*aux)->siguienteTarea)->T.id != id_tarea)
     {
+        *aux = (*aux)->siguienteTarea;
+    }
+    NodoTarea * nodo_a_cambiar_de_lista = (*aux)->siguienteTarea;
+    *aux = (nodo_a_cambiar_de_lista)->siguienteTarea;
+    //nodo_a_cambiar_de_lista->siguienteTarea = NULL;
+    insertarTarea(lista_r,nodo_a_cambiar_de_lista);
+    */
+    /**/
+    NodoTarea * aux = *lista_p;
+    NodoTarea * auxAnterior = NULL;
+    while(aux && aux->siguienteTarea && aux->T.id != id_tarea)
+    {
+        auxAnterior = aux;
         aux = aux->siguienteTarea;
     }
-    NodoTarea * nodo_a_cambiar_de_lista = aux->siguienteTarea;
-    aux = (nodo_a_cambiar_de_lista)->siguienteTarea;
-    insertarTarea(lista_r,nodo_a_cambiar_de_lista);
+    insertarTarea(lista_r,aux);
+    auxAnterior = aux->siguienteTarea;
+    /**/
 
-    return nodo_a_cambiar_de_lista;
+    return aux;
 }
