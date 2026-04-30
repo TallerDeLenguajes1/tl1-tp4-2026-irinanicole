@@ -29,7 +29,7 @@ Tarea crearTarea(int * id_tarea, char * descripcion_tarea, int duracion_tarea);
 NodoTarea * crearNodoTarea(NodoTarea ** lista_pendientes,int * id_tarea, char * descripcion_tarea, int duracion_tarea);
 void insertarTarea(NodoTarea ** lista, NodoTarea * nodo_tarea);
 void mostrarTareas(NodoTarea * lista);
-NodoTarea * marcarTarea(NodoTarea ** lista_p, NodoTarea ** lista_r, int id_tarea); // mueve una tarea de la lista de t_Pendientes a la de t_Realizadas
+NodoTarea * marcarTareaComoRealizada(NodoTarea ** lista_p, NodoTarea ** lista_r, int id_tarea); // mueve una tarea de la lista de t_Pendientes a la de t_Realizadas
 
 int main()
 {
@@ -42,13 +42,13 @@ int main()
 
     NodoTarea * nodo_tarea_nueva;
     // INTERFAZ DE USUARIO: CARGA DE TAREAS PENDIENTES //
-    int seguir_cargando = 1;
+    int seguir_cargando;
     char buffer[50];
     char * descripcionTareaNueva;
     int duracionTareaNueva;
     int repetir_ingreso;
     printf("\n\n<<<< INTERFAZ DE USUARIO >>>>\n\n***CARGA DE TAREAS PENDIENTES***\n");
-    while (seguir_cargando)
+    do
     {
         printf("\n¿Desea registrar una nueva tarea? (SI: 1 | NO: 0): ");
         scanf("%d",&seguir_cargando);
@@ -62,14 +62,14 @@ int main()
             printf("\nDESCRIPCION: ");
             fgets(buffer, sizeof(buffer), stdin);
             // corrijo el final del buffer: reemplazo el '\n' (que agrega el fgets() en la cadena al final) por '\0'
-            buffer[sizeof(buffer)-2] = '\0';
-            //buffer[sizeof(buffer)-1] = '\0';
+            buffer[strlen(buffer)-1] = '\0';
             // defino tamaño para la cadena 'descripcionTareaNueva'
-            descripcionTareaNueva = (char *)malloc(sizeof(char) * sizeof(buffer));
+            descripcionTareaNueva = (char *)malloc(sizeof(char) * strlen(buffer));
             strcpy(descripcionTareaNueva, buffer);
             //
             repetir_ingreso = 1;
-            while(repetir_ingreso){
+            do
+            {
                 printf("\nDURACION (10-100)(min): ");
                 scanf("%d",&duracionTareaNueva);
                 if(100 < duracionTareaNueva || duracionTareaNueva < 10){
@@ -79,21 +79,21 @@ int main()
                 {
                     repetir_ingreso = 0;
                 }
-            }
+            } while(repetir_ingreso);
             // creo un nuevo nodoTarea
             nodo_tarea_nueva = crearNodoTarea(&t_Pendientes, &cantidad_tareas, descripcionTareaNueva, duracionTareaNueva);
             // inserto el nodo en la LISTA DE TAREAS PENDIENTES
             insertarTarea(&t_Pendientes, nodo_tarea_nueva);
         }
         
-    }
+    } while (seguir_cargando);
     printf("\n*********** FIN DE CARGA DE TAREAS ***********\n");
     //
     //
     //
     int respuesta, cambiarTareaARealizada = 1;
     NodoTarea * nodo_tareaMarcada;
-    while(cambiarTareaARealizada)
+    do
     {
         printf("\n\n>>>>LISTA DE TAREAS PENDIENTES<<<<\n");
         mostrarTareas(t_Pendientes);
@@ -103,7 +103,7 @@ int main()
         scanf("%d",&respuesta);
         if (respuesta)
         {
-            nodo_tareaMarcada = marcarTarea(&t_Pendientes, &t_Realizadas, respuesta);
+            nodo_tareaMarcada = marcarTareaComoRealizada(&t_Pendientes, &t_Realizadas, respuesta);
             if (nodo_tareaMarcada)
             {
                 printf("\nLa tarea %d fue movida a la lista de REALIZADAS con exito!\n",nodo_tareaMarcada->T.id);
@@ -112,7 +112,7 @@ int main()
             else
             {
                 printf("\n-----------------------------");
-                printf("\nLa tarea %d aun no ha sido agregada a la lista de Tareas Pendientes.\n");
+                printf("\nLa tarea %d no esta en la lista de Tareas Pendientes.\n");
                 printf("\n-----------------------------");
             }
         }
@@ -131,8 +131,7 @@ int main()
             printf("\n.*** Aun no existen tareas REALIZADAS ***.");
             printf("\n-----------------------------");
         }
-    }
-
+    } while(cambiarTareaARealizada);
     getchar();
     return 0;
 }
@@ -190,30 +189,23 @@ void mostrarTareas(NodoTarea * lista)
 // LA LISTA DE REALIZADAS LA HACE BIEN HASTA CIERTO PUNTO
 // LA LISTA DE PENDIENTES LA ACTUALIZA DE MANERA QUE COMINEZA DESDE LA TAREA QUE QUIERO MOVER 
 // (Y LA DEJA TODAVÍA EN LA LISTA_PENDIENTES)
-NodoTarea * marcarTarea(NodoTarea ** lista_p, NodoTarea ** lista_r, int id_tarea)
+NodoTarea * marcarTareaComoRealizada(NodoTarea ** lista_p, NodoTarea ** lista_r, int id_tarea)
 {   
-    /*
-    NodoTarea ** aux = lista_p;
-    while(*aux && (*aux)->siguienteTarea && ((*aux)->siguienteTarea)->T.id != id_tarea)
-    {
-        *aux = (*aux)->siguienteTarea;
-    }
-    NodoTarea * nodo_a_cambiar_de_lista = (*aux)->siguienteTarea;
-    *aux = (nodo_a_cambiar_de_lista)->siguienteTarea;
-    //nodo_a_cambiar_de_lista->siguienteTarea = NULL;
-    insertarTarea(lista_r,nodo_a_cambiar_de_lista);
-    */
-    /**/
     NodoTarea * aux = *lista_p;
-    NodoTarea * auxAnterior = NULL;
-    while(aux && aux->siguienteTarea && aux->T.id != id_tarea)
+    NodoTarea * auxActual = NULL;
+    // analizo los (4) casos borde: SALGO DEL BUCLE si...
+    // 1. ...es lista vacía
+    // 2. ...es lista con un solo elemento
+    // 3. ...es el primer elemento de una lista con muchos elementos
+    // 4. ...es el último elemento de una lista con muchos elementos
+    while(aux && aux->siguienteTarea && (aux->siguienteTarea)->T.id != id_tarea)
     {
-        auxAnterior = aux;
         aux = aux->siguienteTarea;
     }
-    insertarTarea(lista_r,aux);
-    auxAnterior = aux->siguienteTarea;
-    /**/
-
+    NodoTarea * auxMoverAListaRealizada = aux->siguienteTarea;
+    aux->siguienteTarea = (aux->siguienteTarea)->siguienteTarea;
+    //
+    insertarTarea(lista_r,auxMoverAListaRealizada);
+    
     return aux;
 }
